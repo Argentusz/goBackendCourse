@@ -1,10 +1,18 @@
 package models
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 )
+
+type outOfRange struct {
+	len uint64
+	idx int
+}
+
+func (err outOfRange) Error() string {
+	return fmt.Sprint("index ", strconv.Itoa(err.idx), " is out of range of a list with len ", strconv.Itoa(int(err.len)))
+}
 
 // LinkedList Структура двухсвязного списка для вызова методов и.т.п.
 type LinkedList[T comparable] struct {
@@ -54,7 +62,7 @@ func (l *LinkedList[T]) Add(val T) {
 // Pop Удаление узла из конца списка
 func (l *LinkedList[T]) Pop() error {
 	if l.tail == nil {
-		return errors.New("no elements to pop")
+		return outOfRange{len: 0, idx: 0}
 	}
 	newTail := l.tail.prev
 	newTail.next = nil
@@ -70,7 +78,7 @@ func (l *LinkedList[T]) At(idx int) (T, error) {
 			ptr = ptr.next
 		} else {
 			var defaultValue T
-			return defaultValue, errors.New("index " + strconv.Itoa(idx) + " is out of range of a list")
+			return defaultValue, outOfRange{len: l.Size(), idx: idx}
 		}
 	}
 	return ptr.data, nil
@@ -91,7 +99,7 @@ func (l *LinkedList[T]) DeleteFrom(idx int) error {
 	for i := 0; i < idx; i++ {
 		ptr = ptr.next
 		if ptr == nil {
-			return errors.New("index " + strconv.Itoa(idx) + " is out of range of a list")
+			return outOfRange{len: l.Size(), idx: idx}
 		}
 	}
 	if ptr.prev != nil {
@@ -113,7 +121,7 @@ func (l *LinkedList[T]) UpdateAt(idx int, val T) error {
 	for i := 0; i < idx; i++ {
 		ptr = ptr.next
 		if ptr == nil {
-			return errors.New("index " + strconv.Itoa(idx) + " is out of range of a list")
+			return outOfRange{len: l.Size(), idx: idx}
 		}
 	}
 	ptr.data = val
@@ -133,7 +141,7 @@ func (l *LinkedList[T]) InsertAt(idx int, val T) error {
 		if ptr.next != nil {
 			ptr = ptr.next
 		} else {
-			return errors.New("index " + strconv.Itoa(idx) + " is out of range of a list")
+			return outOfRange{len: l.Size(), idx: idx}
 		}
 	}
 	newNode.next = ptr.next
@@ -141,10 +149,10 @@ func (l *LinkedList[T]) InsertAt(idx int, val T) error {
 	if ptr.next != nil {
 		ptr.next.prev = &newNode
 		ptr.next = &newNode
-	} else {
-		l.tail.next = &newNode
-		l.tail = &newNode
+		return nil
 	}
+	l.tail.next = &newNode
+	l.tail = &newNode
 	return nil
 }
 
